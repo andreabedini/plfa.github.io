@@ -81,7 +81,7 @@ successor of two; and so on.
 Write out `7` in longhand.
 
 ```
--- Your code goes here
+seven = suc (suc (suc (suc (suc (suc (suc zero))))))
 ```
 
 
@@ -430,7 +430,21 @@ other word for evidence, which we will use interchangeably, is _proof_.
 Compute `3 + 4`, writing out your reasoning as a chain of equations, using the equations for `+`.
 
 ```
--- Your code goes here
+_ : 3 + 4 ≡ 7
+_ =
+  begin
+    3 + 4
+  ≡⟨⟩
+    suc (2 + 4)
+  ≡⟨⟩
+    suc (suc (1 + 4))
+  ≡⟨⟩
+    suc (suc (suc (0 + 4)))
+  ≡⟨⟩
+    suc (suc (suc 4))
+  ≡⟨⟩
+    7
+  ∎
 ```
 
 
@@ -492,7 +506,20 @@ Compute `3 * 4`, writing out your reasoning as a chain of equations, using the e
 (You do not need to step through the evaluation of `+`.)
 
 ```
--- Your code goes here
+_ =
+  begin
+    3 * 4
+  ≡⟨⟩    -- inductive case
+    4 + 2 * 4
+  ≡⟨⟩    -- inductive case
+    4 + (4 + 1 * 4)
+  ≡⟨⟩    -- inductive case
+    4 + (4 + (4 + 0 * 4))
+  ≡⟨⟩    -- base case
+    4 + (4 + (4 + 0))
+  ≡⟨⟩
+    12
+  ∎
 ```
 
 
@@ -506,7 +533,26 @@ Define exponentiation, which is given by the following equations:
 Check that `3 ^ 4` is `81`.
 
 ```
--- Your code goes here
+_^_ : ℕ → ℕ → ℕ
+m ^ zero = 1
+m ^ (suc n) = m * (m ^ n)
+
+_ =
+  begin
+    3 ^ 4
+  ≡⟨⟩    -- inductive case
+    3 * (3 ^ 3)
+  ≡⟨⟩    -- inductive case
+    3 * (3 * (3 ^ 2))
+  ≡⟨⟩    -- inductive case
+    3 * (3 * (3 * (3 ^ 1)))
+  ≡⟨⟩    -- inductive case
+    3 * (3 * (3 * (3 * (3 ^ 0))))
+  ≡⟨⟩    -- base case
+    3 * 3 * 3 * 3
+  ≡⟨⟩
+    81
+  ∎
 ```
 
 
@@ -571,7 +617,31 @@ _ =
 Compute `5 ∸ 3` and `3 ∸ 5`, writing out your reasoning as a chain of equations.
 
 ```
--- Your code goes here
+_ =
+  begin
+    5 ∸ 3
+  ≡⟨⟩
+    4 ∸ 2
+  ≡⟨⟩
+    3 ∸ 1
+  ≡⟨⟩
+    2 ∸ 0
+  ≡⟨⟩
+    2
+  ∎
+
+_ =
+  begin
+    3 ∸ 5
+  ≡⟨⟩
+    2 ∸ 4
+  ≡⟨⟩
+    1 ∸ 3
+  ≡⟨⟩
+    0 ∸ 2
+  ≡⟨⟩
+    0
+  ∎
 ```
 
 
@@ -918,7 +988,64 @@ represents a positive natural, and represent zero by `⟨⟩ O`.
 Confirm that these both give the correct answer for zero through four.
 
 ```
--- Your code goes here
+inc : Bin → Bin
+inc ⟨⟩ = ⟨⟩ I
+inc (n O) = n I
+inc (n I) = (inc n) O
+
+_ : inc ⟨⟩ ≡ ⟨⟩ I -- O
+_ = refl
+
+_ : inc (⟨⟩ O) ≡ ⟨⟩ I -- 1
+_ = refl
+
+_ : inc (⟨⟩ I) ≡ ⟨⟩ I O -- 2
+_ = refl
+
+_ : inc (⟨⟩ I O) ≡ ⟨⟩ I I -- 3
+_ = refl
+
+_ : inc (⟨⟩ I I) ≡ ⟨⟩ I O O  -- 4
+_ = refl
+
+to : ℕ → Bin
+to zero = ⟨⟩
+to (suc n) = inc (to n)
+
+_ : to 0 ≡ ⟨⟩
+_ = refl
+
+_ : to 1 ≡ ⟨⟩ I
+_ = refl
+
+_ : to 2 ≡ ⟨⟩ I O
+_ = refl
+
+_ : to 3 ≡ ⟨⟩ I I
+_ = refl
+
+_ : to 4 ≡ ⟨⟩ I O O
+_ = refl
+
+from : Bin → ℕ
+from ⟨⟩ = zero
+from (m O) = 2 * (from m)
+from (m I) = 2 * (from m) + 1
+
+_ : from ⟨⟩ ≡ 0
+_ = refl
+
+_ : from (⟨⟩ I) ≡ 1
+_ = refl
+
+_ : from (⟨⟩ I O) ≡ 2
+_ = refl
+
+_ : from (⟨⟩ I I) ≡ 3
+_ = refl
+
+_ : from (⟨⟩ I O O) ≡ 4
+_ = refl
 ```
 
 
