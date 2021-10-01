@@ -990,8 +990,8 @@ Confirm that these both give the correct answer for zero through four.
 ```
 inc : Bin → Bin
 inc ⟨⟩ = ⟨⟩ I
-inc (n O) = n I
-inc (n I) = (inc n) O
+inc (b O) = b I
+inc (b I) = (inc b) O
 
 _ : inc ⟨⟩ ≡ ⟨⟩ I -- O
 _ = refl
@@ -1029,8 +1029,8 @@ _ = refl
 
 from : Bin → ℕ
 from ⟨⟩ = zero
-from (m O) = 2 * (from m)
-from (m I) = 2 * (from m) + 1
+from (b O) = 2 * (from b)
+from (b I) = suc (2 * (from b))
 
 _ : from ⟨⟩ ≡ 0
 _ = refl

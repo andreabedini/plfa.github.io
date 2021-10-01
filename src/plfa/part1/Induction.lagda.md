@@ -868,7 +868,20 @@ just apply the previous results which show addition
 is associative and commutative.
 
 ```
--- Your code goes here
++-swap : ∀ (m n p : ℕ) → m + (n + p) ≡ n + (m + p)
++-swap m n p rewrite +-comm n p rewrite sym (+-assoc m p n) rewrite +-comm (m + p) n = refl
+
++-swap′ : ∀ (m n p : ℕ) → m + (n + p) ≡ n + (m + p)
++-swap′ m n p =
+    begin
+      m + (n + p)
+    ≡⟨ cong (m +_) (+-comm n p) ⟩
+      m + (p + n)
+    ≡⟨ sym (+-assoc m p n) ⟩
+      (m + p) + n
+    ≡⟨ +-comm (m + p) n ⟩
+      n + (m + p)
+    ∎
 ```
 
 
@@ -881,7 +894,24 @@ Show multiplication distributes over addition, that is,
 for all naturals `m`, `n`, and `p`.
 
 ```
--- Your code goes here
+*-distrib-+ : ∀ (m n p : ℕ) → (m + n) * p ≡ m * p + n * p
+*-distrib-+ zero n p = refl
+*-distrib-+ (suc m) n p rewrite *-distrib-+ m n p rewrite +-assoc p (m * p) (n * p) = refl
+
+*-distrib-+′ : ∀ (m n p : ℕ) → (m + n) * p ≡ m * p + n * p
+*-distrib-+′ zero n p = refl
+*-distrib-+′ (suc m) n p =
+  begin
+    (suc m + n) * p
+  ≡⟨⟩
+    p + (m + n) * p
+  ≡⟨ cong (p +_) (*-distrib-+′ m n p) ⟩
+    p + ((m * p) + (n * p))
+  ≡⟨ sym (+-assoc p (m * p) (n * p)) ⟩
+    p + m * p + n * p
+  ≡⟨⟩
+    suc m * p + n * p
+  ∎
 ```
 
 
@@ -894,7 +924,9 @@ Show multiplication is associative, that is,
 for all naturals `m`, `n`, and `p`.
 
 ```
--- Your code goes here
+*-assoc : ∀ (m n p : ℕ) → (m * n) * p ≡ m * (n * p)
+*-assoc zero n p = refl
+*-assoc (suc m) n p rewrite *-distrib-+ n (m * n) p rewrite *-assoc m n p = refl
 ```
 
 
@@ -908,7 +940,17 @@ for all naturals `m` and `n`.  As with commutativity of addition,
 you will need to formulate and prove suitable lemmas.
 
 ```
--- Your code goes here
+*-identityʳ : ∀ (n : ℕ) → n * zero ≡ zero
+*-identityʳ zero = refl
+*-identityʳ (suc n) rewrite *-identityʳ n = refl
+
+*-succ : ∀ (m n : ℕ) → m * (suc n) ≡ m + m * n
+*-succ zero n = refl
+*-succ (suc m) n rewrite *-succ m n rewrite sym (+-assoc n m (m * n)) rewrite sym (+-assoc m n (m * n)) rewrite +-comm n m = refl
+
+*-comm : ∀ (m n : ℕ) → m * n ≡ n * m
+*-comm zero n rewrite *-identityʳ n = refl
+*-comm (suc m) n rewrite *-comm m n rewrite +-comm n (n * m) rewrite *-succ n m rewrite +-comm (n * m) n = refl
 ```
 
 
@@ -921,7 +963,11 @@ Show
 for all naturals `n`. Did your proof require induction?
 
 ```
--- Your code goes here
+0∸n≡0 : ∀ (n : ℕ) → zero ∸ n ≡ zero
+0∸n≡0 zero = refl
+0∸n≡0 (suc n) = refl
+
+-- no, it didn't
 ```
 
 
@@ -934,7 +980,10 @@ Show that monus associates with addition, that is,
 for all naturals `m`, `n`, and `p`.
 
 ```
--- Your code goes here
+∸-+-assoc : ∀ (m n p : ℕ) → m ∸ n ∸ p ≡ m ∸ (n + p)
+∸-+-assoc zero n p rewrite 0∸n≡0 (n + p) rewrite 0∸n≡0 n rewrite 0∸n≡0 p = refl
+∸-+-assoc (suc m) zero p = refl
+∸-+-assoc (suc m) (suc n) p rewrite ∸-+-assoc m n p = refl
 ```
 
 
@@ -948,6 +997,45 @@ Show the following three laws
 
 for all `m`, `n`, and `p`.
 
+```
+open import Data.Nat using (_^_)
+
+n+0≡n : ∀ (n : ℕ) → n + zero ≡ n
+n+0≡n n rewrite +-comm n zero = refl
+
+n*1≡n : ∀ (n : ℕ) → n * 1 ≡ n
+n*1≡n n rewrite *-comm n 1 rewrite n+0≡n n = refl
+
+^-distribˡ-+-* : ∀ (m n p : ℕ) → m ^ (n + p) ≡ (m ^ n) * (m ^ p)
+^-distribˡ-+-* m zero zero = refl
+^-distribˡ-+-* m zero p rewrite n+0≡n (m ^ p) = refl
+^-distribˡ-+-* m (suc n) p rewrite ^-distribˡ-+-* m n p rewrite *-assoc m (m ^ n) (m ^ p) = refl
+
+^-distribʳ-* : ∀ (m n p : ℕ) → (m * n) ^ p ≡ (m ^ p) * (n ^ p)
+^-distribʳ-* m n zero = refl
+^-distribʳ-* m n (suc p) =
+  begin
+    (m * n) ^ suc p
+  ≡⟨⟩
+    m * n * (m * n) ^ p
+  ≡⟨ cong ((m * n) *_) (^-distribʳ-* m n p) ⟩
+    m * n * ((m ^ p) * (n ^ p))
+  ≡⟨ *-assoc m n ((m ^ p) * (n ^ p)) ⟩
+    m * (n * ((m ^ p) * (n ^ p)))
+  ≡⟨ cong (m *_) (sym (*-assoc n (m ^ p) (n ^ p))) ⟩
+    m * (n * (m ^ p) * (n ^ p))
+  ≡⟨ cong (m *_) (cong (_* (n ^ p)) (*-comm n (m ^ p))) ⟩
+    m * (m ^ p * n * (n ^ p))
+  ≡⟨ cong (m *_) (*-assoc (m ^ p) n (n ^ p)) ⟩
+    m * (m ^ p * (n * (n ^ p)))
+  ≡⟨ sym (*-assoc m (m ^ p) (n * n ^ p)) ⟩
+    (m * m ^ p) * (n * (n ^ p))
+ ∎
+
+^-*-assoc : ∀ (m n p : ℕ) → (m ^ n) ^ p ≡ m ^ (n * p)
+^-*-assoc m n zero rewrite *-comm n zero = refl
+^-*-assoc m n (suc p) rewrite ^-*-assoc m n p rewrite sym (^-distribˡ-+-* m n (n * p)) rewrite *-comm n (suc p) rewrite *-comm p n = refl
+```
 
 #### Exercise `Bin-laws` (stretch) {#Bin-laws}
 
@@ -970,7 +1058,42 @@ over bitstrings:
 For each law: if it holds, prove; if not, give a counterexample.
 
 ```
--- Your code goes here
+-- start cut and paste
+data Bin : Set where
+  ⟨⟩ : Bin
+  _O : Bin → Bin
+  _I : Bin → Bin
+
+inc : Bin → Bin
+inc ⟨⟩ = ⟨⟩ I
+inc (b O) = b I
+inc (b I) = (inc b) O
+
+to : ℕ → Bin
+to zero = ⟨⟩
+to (suc n) = inc (to n)
+
+from : Bin → ℕ
+from ⟨⟩ = zero
+from (b O) = 2 * (from b)
+from (b I) = suc (2 * (from b))
+-- end cut and paste
+
+one : ∀ (b : Bin) → from (inc b) ≡ suc (from b)
+one ⟨⟩ = refl
+one (b O) = refl
+one (b I) rewrite one b rewrite n+0≡n (from b) rewrite +-suc (from b) (from b) = refl
+
+two_is_false : to (from (⟨⟩ O)) ≡ ⟨⟩
+two_is_false =
+  to (from (⟨⟩ O))
+  ≡⟨⟩
+  ⟨⟩
+  ∎
+
+three : ∀ (n : ℕ) → from (to n) ≡ n
+three zero = refl
+three (suc n) rewrite one (to n) rewrite three n = refl
 ```
 
 
