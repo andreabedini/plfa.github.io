@@ -28,7 +28,7 @@ and some operations upon them.  We also import a couple of new operations,
 ```
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; cong; sym)
-open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
+open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; step-≡˘; _∎)
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _∸_)
 ```
 
@@ -869,7 +869,9 @@ is associative and commutative.
 
 ```
 +-swap : ∀ (m n p : ℕ) → m + (n + p) ≡ n + (m + p)
-+-swap m n p rewrite +-comm n p rewrite sym (+-assoc m p n) rewrite +-comm (m + p) n = refl
++-swap m n p rewrite +-comm n p
+                   | sym (+-assoc m p n)
+                   | +-comm (m + p) n = refl
 
 +-swap′ : ∀ (m n p : ℕ) → m + (n + p) ≡ n + (m + p)
 +-swap′ m n p =
@@ -877,7 +879,7 @@ is associative and commutative.
       m + (n + p)
     ≡⟨ cong (m +_) (+-comm n p) ⟩
       m + (p + n)
-    ≡⟨ sym (+-assoc m p n) ⟩
+    ≡˘⟨ +-assoc m p n ⟩
       (m + p) + n
     ≡⟨ +-comm (m + p) n ⟩
       n + (m + p)
@@ -906,14 +908,17 @@ for all naturals `m`, `n`, and `p`.
   ≡⟨⟩
     p + (m + n) * p
   ≡⟨ cong (p +_) (*-distrib-+′ m n p) ⟩
-    p + ((m * p) + (n * p))
-  ≡⟨ sym (+-assoc p (m * p) (n * p)) ⟩
+    p + (m * p + n * p)
+  ≡˘⟨ +-assoc p (m * p) (n * p) ⟩
     p + m * p + n * p
   ≡⟨⟩
     suc m * p + n * p
   ∎
-```
 
+*-distrib-+'' : ∀ (m n p : ℕ) → (m + n) * p ≡ m * p + n * p
+*-distrib-+'' zero n p = refl
+*-distrib-+'' (suc m) n p rewrite *-distrib-+ m n p | +-assoc p (m * p) (n * p) = refl
+```
 
 #### Exercise `*-assoc` (recommended) {#times-assoc}
 
@@ -1030,7 +1035,7 @@ n*1≡n n rewrite *-comm n 1 rewrite n+0≡n n = refl
     m * (m ^ p * (n * (n ^ p)))
   ≡⟨ sym (*-assoc m (m ^ p) (n * n ^ p)) ⟩
     (m * m ^ p) * (n * (n ^ p))
- ∎
+  ∎
 
 ^-*-assoc : ∀ (m n p : ℕ) → (m ^ n) ^ p ≡ m ^ (n * p)
 ^-*-assoc m n zero rewrite *-comm n zero = refl
