@@ -18,8 +18,8 @@ the next step is to define relations, such as _less than or equal_.
 ```
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; cong)
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.Nat.Properties using (+-comm; +-identityʳ)
+open import Data.Nat using (ℕ; zero; suc; _+_; _*_)
+open import Data.Nat.Properties using (+-comm; +-identityʳ; *-comm)
 ```
 
 
@@ -246,13 +246,20 @@ partial order but not a total order.
 Give an example of a preorder that is not a partial order.
 
 ```
--- Your code goes here
+-- Trust:
+-- Reflexivity: I can trust myself
+-- Transitivity: If I trust you and your trust your friend, I can trust your friend
+-- Anti-symmetry does not hold: We can both trust each other, but we don't have to
 ```
 
 Give an example of a partial order that is not a total order.
 
 ```
--- Your code goes here
+-- Being part of something
+-- Reflexivity: I am part of myself
+-- Transitivity: If I am part of you and you are a part of something, I am part of something too
+-- Anti-symmetry: If I am part of you and you are part of me, we are the same
+-- Totality does not hold: It is not necessary that you are either part of me or I am part of you
 ```
 
 ## Reflexivity
@@ -365,7 +372,8 @@ The above proof omits cases where one argument is `z≤n` and one
 argument is `s≤s`.  Why is it ok to omit them?
 
 ```
--- Your code goes here
+-- if the evicence for m ≤ n is given by z≤n then m ≡ 0, while the
+-- evidence of n ≤ m provided by s≤s requires m to be succ
 ```
 
 
@@ -555,7 +563,24 @@ transitivity proves `m + p ≤ n + q`, as was to be shown.
 Show that multiplication is monotonic with regard to inequality.
 
 ```
--- Your code goes here
+*-monoʳ-≤ : ∀ (n p q : ℕ)
+  → p ≤ q
+    -------------
+  → n * p ≤ n * q
+*-monoʳ-≤ zero p q p≤q = z≤n
+*-monoʳ-≤ (suc n) p q p≤q = +-mono-≤ p q (n * p) (n * q) p≤q (*-monoʳ-≤ n p q p≤q)
+
+*-monoˡ-≤ : ∀ (m n p : ℕ)
+  → m ≤ n
+    --------------
+  → m * p ≤ n * p
+*-monoˡ-≤ m n p m≤n rewrite *-comm m p | *-comm n p = *-monoʳ-≤ p m n m≤n
+
+*-mono-≤ : ∀ (m n p q : ℕ)
+  → m ≤ n
+  → p ≤ q
+  → m * p ≤ n * q
+*-mono-≤ m n p q m≤n p≤q = ≤-trans (*-monoˡ-≤ m n p m≤n) (*-monoʳ-≤ n p q p≤q)
 ```
 
 
@@ -602,7 +627,13 @@ exploiting the corresponding properties of inequality.
 Show that strict inequality is transitive.
 
 ```
--- Your code goes here
+<-trans : ∀ {m n p : ℕ}
+  → m < n
+  → n < p
+    -----
+  → m < p
+<-trans z<s (s<s n<p) = z<s
+<-trans (s<s m<n) (s<s n<p) = s<s (<-trans m<n n<p)
 ```
 
 #### Exercise `trichotomy` (practice) {#trichotomy}
@@ -620,7 +651,30 @@ similar to that used for totality.
 [negation](/Negation/).)
 
 ```
--- Your code goes here
+data Trichotomy (m n : ℕ) : Set where
+
+  forward :
+      m < n
+      --------
+    → Trichotomy m n
+
+  middle :
+      m ≡ n
+    → Trichotomy m n
+
+  flipped :
+      n < m
+      ---------
+    → Trichotomy m n
+
+<-trichotomy : ∀ (m n : ℕ) → Trichotomy m n
+<-trichotomy zero zero = middle refl
+<-trichotomy zero (suc n) = forward z<s
+<-trichotomy (suc m) zero = flipped z<s
+<-trichotomy (suc m) (suc n) with <-trichotomy m n
+...                             | forward m<n = forward (s<s m<n)
+...                             | middle m≡n = middle (cong suc m≡n)
+...                             | flipped n<m = flipped (s<s n<m)
 ```
 
 #### Exercise `+-mono-<` (practice) {#plus-mono-less}
@@ -629,7 +683,25 @@ Show that addition is monotonic with respect to strict inequality.
 As with inequality, some additional definitions may be required.
 
 ```
--- Your code goes here
++-monoʳ-< : ∀ (n p q : ℕ)
+  → p < q
+    -------------
+  → n + p < n + q
++-monoʳ-< zero p q p<q = p<q
++-monoʳ-< (suc n) p q p<q = s<s (+-monoʳ-< n p q p<q)
+
++-monoˡ-< : ∀ (m n p : ℕ)
+  → m < n
+    -------------
+  → m + p < n + p
++-monoˡ-< m n p m<n rewrite +-comm m p | +-comm n p = +-monoʳ-< p m n m<n
+
++-mono-< : ∀ (m n p q : ℕ)
+  → m < n
+  → p < q
+    -------------
+  → m + p < n + q
++-mono-< m n p q m<n p<q = <-trans (+-monoˡ-< m n p m<n) (+-monoʳ-< n p q p<q)
 ```
 
 #### Exercise `≤-iff-<` (recommended) {#leq-iff-less}
@@ -637,7 +709,17 @@ As with inequality, some additional definitions may be required.
 Show that `suc m ≤ n` implies `m < n`, and conversely.
 
 ```
--- Your code goes here
+≤-iff-<-1 : ∀ (m n : ℕ)
+  → suc m ≤ n
+  → m < n
+≤-iff-<-1 zero (suc n) _ = z<s
+≤-iff-<-1 (suc m) (suc n) (s≤s s≤n) = s<s (≤-iff-<-1 m n s≤n)
+
+≤-iff-<-2 : ∀ (m n : ℕ)
+  → m < n
+  → suc m ≤ n
+≤-iff-<-2 zero (suc n) _ = s≤s z≤n
+≤-iff-<-2 (suc m) (suc n) (s<s m<n) = s≤s (≤-iff-<-2 m n m<n)
 ```
 
 #### Exercise `<-trans-revisited` (practice) {#less-trans-revisited}
@@ -647,7 +729,20 @@ using the relation between strict inequality and inequality and
 the fact that inequality is transitive.
 
 ```
--- Your code goes here
+sn≤n : ∀ {n : ℕ} -> n ≤ suc n
+sn≤n {zero} = z≤n
+sn≤n {suc n} = s≤s sn≤n
+
+<-trans′ : ∀ {m n p : ℕ}
+  → m < n
+  → n < p
+    -----
+  → m < p
+<-trans′ {m} {n} {p} m<n n<p = ≤-iff-<-1 m p sm≤p
+  where
+    sm≤n = ≤-iff-<-2 m n m<n
+    sn≤p = ≤-iff-<-2 n p n<p
+    sm≤p = ≤-trans sm≤n (≤-trans sn≤n sn≤p)
 ```
 
 
@@ -754,7 +849,17 @@ successor of the sum of two even numbers, which is even.
 Show that the sum of two odd numbers is even.
 
 ```
--- Your code goes here
+e+o≡o : ∀ {m n : ℕ}
+  → even m
+  → odd n
+  → odd (m + n)
+e+o≡o {m} {suc n} em (suc en) rewrite +-comm m (suc n) = suc (e+e≡e en em)
+
+o+o≡e : ∀ {m n : ℕ}
+  → odd m
+  → odd n
+  → even (m + n)
+o+o≡e (suc em) en = suc (e+o≡o em en)
 ```
 
 #### Exercise `Bin-predicates` (stretch) {#Bin-predicates}
@@ -807,7 +912,55 @@ properties of `One`. Also, you may need to prove that
 if `One b` then `1` is less or equal to the result of `from b`.)
 
 ```
--- Your code goes here
+data Bin : Set where
+  ⟨⟩ : Bin
+  _O : Bin → Bin
+  _I : Bin → Bin
+
+inc : Bin → Bin
+inc ⟨⟩ = ⟨⟩ I
+inc (b O) = b I
+inc (b I) = (inc b) O
+
+to : ℕ → Bin
+to zero = ⟨⟩
+to (suc n) = inc (to n)
+
+from : Bin → ℕ
+from ⟨⟩ = zero
+from (b O) = 2 * (from b)
+from (b I) = suc (2 * (from b))
+
+data One : Bin → Set where
+  ⟨⟩I : One (⟨⟩ I)
+
+  bO : ∀ {b : Bin}
+    → One b
+    → One (b O)
+
+  bI : ∀ {b : Bin}
+    → One b
+    → One (b I)
+
+one_b_one_inc_b : ∀ {b : Bin}
+  → One b
+  → One (inc b)
+one_b_one_inc_b {b O} (bO ob) = bI ob
+one_b_one_inc_b {.⟨⟩ I} ⟨⟩I = bO ⟨⟩I
+one_b_one_inc_b {b I} (bI ob) = bO (one_b_one_inc_b ob)
+
+data Can : Bin → Set where
+  canZ : Can (⟨⟩ O)
+
+  canO : ∀ {b : Bin}
+    → One b
+    →  Can b
+
+can_b_can_inc_b : ∀ {b : Bin}
+  → Can b
+  → Can (inc b)
+can_b_can_inc_b canZ = canO ⟨⟩I
+can_b_can_inc_b (canO ob) = canO (one_b_one_inc_b ob)
 ```
 
 ## Standard library
