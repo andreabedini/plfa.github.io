@@ -362,7 +362,84 @@ it to write out an alternative proof that addition is monotonic with
 regard to inequality.  Rewrite all of `+-monoˡ-≤`, `+-monoʳ-≤`, and `+-mono-≤`.
 
 ```
--- Your code goes here
+data _≤_ : ℕ → ℕ → Set where
+  z≤n : ∀ {n : ℕ} → zero ≤ n
+  s≤s : ∀ {m n : ℕ} → m ≤ n → suc m ≤ suc n
+
+infix 4 _≤_
+
+postulate
+    ≤-trans : ∀ {m n p : ℕ} → m ≤ n → n ≤ p → m ≤ p
+    n≤n : ∀ {n : ℕ} → n ≤ n
+
+module ≤-Reasoning where
+
+  infix  1 ≤-begin_
+  infixr 2 _≤⟨⟩_ _≤⟨_⟩_
+  infix  3 _≤-∎
+
+  ≤-begin_ : ∀ {x y : ℕ}
+    → x ≤ y
+    → x ≤ y
+  ≤-begin x≤y = x≤y
+
+  _≤⟨⟩_ : ∀ (x : ℕ) {y : ℕ}
+    → x ≤ y
+    → x ≤ y
+  x ≤⟨⟩ x≤y = x≤y
+
+  _≤⟨_⟩_ : ∀ (x : ℕ) {y z : ℕ}
+    → x ≤ y
+    → y ≤ z
+    → x ≤ z
+  x ≤⟨ x≤y ⟩ y≤z = ≤-trans x≤y y≤z
+
+  _≤-∎ : ∀ (x : ℕ)
+    → x ≤ x
+  x ≤-∎ = n≤n
+
+open ≤-Reasoning
+
++-monoʳ-≤ : ∀ (n p q : ℕ)
+  → p ≤ q
+  → n + p ≤ n + q
++-monoʳ-≤ zero p q p≤q =
+  ≤-begin
+    p
+  ≤⟨ p≤q ⟩
+    q
+  ≤-∎
++-monoʳ-≤ (suc n) p q p≤q =
+  ≤-begin
+    suc (n + p)
+  ≤⟨ s≤s (+-monoʳ-≤ n p q p≤q) ⟩
+    suc (n + q)
+  ≤-∎
+
+≤-refl : ∀ {m : ℕ}
+  → m ≤ m
+≤-refl {zero} = z≤n
+≤-refl {suc m} = s≤s (≤-refl {m})
+
+≡-implies-≤ : ∀ {m n : ℕ}
+  → m ≡ n
+  → m ≤ n
+≡-implies-≤ {zero} {zero} m≡n = z≤n
+≡-implies-≤ {suc m} {suc m} refl = s≤s (≤-refl {m})
+
++-monoˡ-≤ : ∀ (m n p : ℕ)
+  → m ≤ n
+  → m + p ≤ n + p
++-monoˡ-≤ m n p m≤n =
+  ≤-begin
+    m + p
+  ≤⟨ ≡-implies-≤ (+-comm m p) ⟩
+    p + m
+  ≤⟨ +-monoʳ-≤ p m n m≤n ⟩
+    p + n
+  ≤⟨ ≡-implies-≤ (+-comm p n) ⟩
+    n + p
+  ≤-∎
 ```
 
 
