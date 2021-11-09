@@ -447,7 +447,16 @@ postulate
 ```
 
 ```
--- Your code goes here
+≃-implies-≲′ : ∀ {A B : Set}
+    → A ≃ B
+      -----
+    → A ≲ B
+≃-implies-≲′ A≃B =
+  record
+    { to     = to A≃B
+    ; from   = from A≃B
+    ; from∘to = from∘to A≃B
+    }
 ```
 
 #### Exercise `_⇔_` (practice) {#iff}
@@ -458,11 +467,39 @@ record _⇔_ (A B : Set) : Set where
   field
     to   : A → B
     from : B → A
+open _⇔_
 ```
 Show that equivalence is reflexive, symmetric, and transitive.
 
 ```
--- Your code goes here
+⇔-refl : ∀ {A : Set}
+    ------
+  → A ⇔ A
+⇔-refl =
+  record
+    { to   = λ a → a
+    ; from = λ a → a
+    }
+
+⇔-sym : ∀ {A B : Set}
+  → A ⇔ B
+    ------
+  → B ⇔ A
+⇔-sym A⇔B =
+  record
+    { to   = λ b → from A⇔B b
+    ; from = λ a → to A⇔B a 
+    }
+
+⇔-trans : ∀ {A B C : Set}
+  → A ⇔ B
+  → B ⇔ C
+  → A ⇔ C
+⇔-trans A⇔B B⇔C =
+  record
+    { to   = λ a → to B⇔C (to A⇔B a)
+    ; from = λ c → from A⇔B (from B⇔C c)
+    }
 ```
 
 #### Exercise `Bin-embedding` (stretch) {#Bin-embedding}
@@ -482,10 +519,29 @@ which satisfy the following property:
 
 Using the above, establish that there is an embedding of `ℕ` into `Bin`.
 ```
--- Your code goes here
+data Bin : Set where
+  ⟨⟩ : Bin
+  _O : Bin → Bin
+  _I : Bin → Bin
+
+-- already proven before
+postulate
+  bin_to : ℕ → Bin
+  bin_from : Bin → ℕ
+  bin_eq : ∀ (n : ℕ) → bin_from (bin_to n) ≡ n
+
+ℕ≲Bin : ℕ ≲ Bin
+ℕ≲Bin =
+  record
+    { to = bin_to
+    ; from = bin_from
+    ; from∘to = bin_eq
+    }
 ```
 
 Why do `to` and `from` not form an isomorphism?
+
+me: because to (from y) ≡ y does not hold (as proven in [Bin-laws])
 
 ## Standard library
 
