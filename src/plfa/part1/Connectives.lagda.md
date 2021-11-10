@@ -194,6 +194,15 @@ and similarly for `to∘from`:
     ; from∘to  =  λ{ ⟨ x , y ⟩ → refl }
     ; to∘from  =  λ{ ⟨ y , x ⟩ → refl }
     }
+
+×-comm′ : ∀ {A B : Set} → A ×′ B ≃ B ×′ A
+×-comm′ =
+  record
+    { to       =  λ{ ⟨ x , y ⟩′ → ⟨ y , x ⟩′ }
+    ; from     =  λ{ ⟨ y , x ⟩′ → ⟨ x , y ⟩′ }
+    ; from∘to  =  λ{ w → refl }
+    ; to∘from  =  λ{ w → refl }
+    }
 ```
 
 Being _commutative_ is different from being _commutative up to
@@ -241,7 +250,15 @@ Show that `A ⇔ B` as defined [earlier](/Isomorphism/#iff)
 is isomorphic to `(A → B) × (B → A)`.
 
 ```
--- Your code goes here
+open plfa.part1.Isomorphism using (_⇔_)
+⇔≃x : ∀ {A B : Set} → A ⇔ B ≃ (A → B) × (B → A)
+⇔≃x =
+  record
+    { to      = λ A⇔B → ⟨ _⇔_.to A⇔B , _⇔_.from A⇔B ⟩
+    ; from    = λ{ ⟨ A→B , B→A ⟩ → record { to = A→B ; from = B→A } }
+    ; from∘to = λ x → refl
+    ; to∘from = λ{ ⟨ A→B , B→A ⟩ → refl }
+    }
 ```
 
 
@@ -454,7 +471,14 @@ commutative and associative _up to isomorphism_.
 Show sum is commutative up to isomorphism.
 
 ```
--- Your code goes here
+⊎-comm : ∀ {A B : Set} → A ⊎ B ≃ B ⊎ A
+⊎-comm =
+  record
+    { to = case-⊎ inj₂ inj₁ 
+    ; from = case-⊎ inj₂ inj₁
+    ; from∘to = λ { (inj₁ x) → refl ; (inj₂ x) → refl }
+    ; to∘from = λ { (inj₁ x) → refl ; (inj₂ x) → refl }
+    }
 ```
 
 #### Exercise `⊎-assoc` (practice)
@@ -462,7 +486,14 @@ Show sum is commutative up to isomorphism.
 Show sum is associative up to isomorphism.
 
 ```
--- Your code goes here
+⊎-assoc : ∀ {A B C : Set} → (A ⊎ B) ⊎ C ≃ A ⊎ (B ⊎ C)
+⊎-assoc =
+  record
+    { to = case-⊎ (case-⊎ inj₁ (inj₂ ∘ inj₁)) (inj₂ ∘ inj₂) 
+    ; from = case-⊎ (inj₁ ∘ inj₁) (case-⊎ (inj₁ ∘ inj₂) inj₂)
+    ; from∘to = λ { (inj₁ (inj₁ x)) → refl ; (inj₁ (inj₂ x)) → refl ; (inj₂ x) → refl }
+    ; to∘from = λ { (inj₁ x) → refl ; (inj₂ (inj₁ x)) → refl ; (inj₂ (inj₂ x)) → refl }
+    }
 ```
 
 ## False is empty
@@ -525,7 +556,14 @@ is the identity of sums _up to isomorphism_.
 Show empty is the left identity of sums up to isomorphism.
 
 ```
--- Your code goes here
+⊥-identityˡ : ∀ {A : Set} → ⊥ ⊎ A ≃ A
+⊥-identityˡ =
+  record
+    { to = λ { (inj₂ x) → x }
+    ; from = inj₂
+    ; from∘to = λ { (inj₂ x) → refl }
+    ; to∘from = λ { y → refl }
+    }
 ```
 
 #### Exercise `⊥-identityʳ` (practice)
@@ -533,7 +571,14 @@ Show empty is the left identity of sums up to isomorphism.
 Show empty is the right identity of sums up to isomorphism.
 
 ```
--- Your code goes here
+⊥-identityʳ : ∀ {A : Set} → A ⊎ ⊥ ≃ A
+⊥-identityʳ =
+  record
+    { to = λ { (inj₁ x) → x }
+    ; from = inj₁
+    ; from∘to = λ { (inj₁ x) → refl }
+    ; to∘from = λ y → refl
+    }
 ```
 
 ## Implication is function {#implication}
@@ -764,7 +809,9 @@ This is called a _weak distributive law_. Give the corresponding
 distributive law, and explain how it relates to the weak version.
 
 ```
--- Your code goes here
+⊎-weak-×′ : ∀ {A B C : Set} → (A ⊎ B) × C → A ⊎ (B × C)
+⊎-weak-×′ ⟨ inj₁ a , c ⟩ = inj₁ a
+⊎-weak-×′ ⟨ inj₂ b , c ⟩ = inj₂ ⟨ b , c ⟩
 ```
 
 
@@ -778,7 +825,15 @@ postulate
 Does the converse hold? If so, prove; if not, give a counterexample.
 
 ```
--- Your code goes here
+⊎×-implies-×⊎′ : ∀ {A B C D : Set} → (A × B) ⊎ (C × D) → (A ⊎ C) × (B ⊎ D)
+⊎×-implies-×⊎′ (inj₁ ⟨ a , b ⟩) = ⟨ inj₁ a , inj₁ b ⟩
+⊎×-implies-×⊎′ (inj₂ ⟨ c , d ⟩) = ⟨ inj₂ c , inj₂ d ⟩
+
+-- (A × B) ⊎ (C × D) has less inhabitants than (A ⊎ C) × (B ⊎ D)
+--
+-- ab + cd < (a + c)(b + d) = ab + ad + cb + cd
+-- 
+-- 0 < ad + cd
 ```
 
 
